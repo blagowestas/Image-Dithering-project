@@ -1,1 +1,1 @@
-# Image-Dithering-project
+#Project for Functional Programming course at FMI. 
