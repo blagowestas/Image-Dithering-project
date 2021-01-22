@@ -96,38 +96,27 @@ loadImage path = do
             makeImage str 
 
 ---------------------------------------------------------------------------------
--- OneDimesional | FloydSteinberg | JarvisJudiceNinke | 
---                  Stucki | Atkinson | Burkes | Sierra | TwoRowSierra |
---                  SierraLite | Ordered4x4 | Ordered8x8
-
 
 roundPixel :: (Ord b, Num a, Num b) => b -> (a, b)
 roundPixel num = if x > num then (0, num) else (255, (-x)) 
     where 
         x = 255 - num
         
-makePixelRow :: [Rgb] -> Int -> [Rgb]
-makePixelRow [] _ = []
-makePixelRow (x:xs) error = 
-    let
-        currentPixel = red x
-        tuple = roundPixel (fromIntegral currentPixel + error)
-        newPixelValue = toEnum (fst tuple)
-        newError = snd tuple
-    in Rgb newPixelValue newPixelValue newPixelValue : makePixelRow xs newError
+-- makePixelRow :: [Rgb] -> Int -> [Rgb]
+-- makePixelRow [] _ = []
+-- makePixelRow (x:xs) error = 
+--     let
+--         currentPixel = red x
+--         tuple = roundPixel (fromIntegral currentPixel + error)
+--         newPixelValue = toEnum (fst tuple)
+--         newError = snd tuple
+--     in Rgb newPixelValue newPixelValue newPixelValue : makePixelRow xs newError
 
-makePixelMatrix :: [[Rgb]] -> [[Rgb]]
-makePixelMatrix = map (`makePixelRow` 0)  
-
--- makeImg :: Image -> Image
--- makeImg current = Image (width current) (height current) (makePixelMatrix (content current))
+-- makePixelMatrix :: [[Rgb]] -> [[Rgb]]
+-- makePixelMatrix = map (`makePixelRow` 0)  
 
 
--- oneDimesional :: String -> Image
--- oneDimesional path = 
- 
-
-
+widthMatrix :: [[a]] -> Int
 widthMatrix matrix = length (head matrix)
  
 getFirst :: (a, b, c) -> a
@@ -169,13 +158,7 @@ getThird (_,_,x) = x
 -- floydSteinberg :: String -> Image
 -- floydSteinberg path = let img = loadImage path
 --                        makeImgFS img
--- ----------------------------------------------------------------------------------------------------
-jarvisJudiceNinke :: String -> Image
-jarvisJudiceNinke path = Image 0 0 []
-----------------------------------------------------------------------------------------------------
-stucki :: String -> Image
-stucki path = Image 0 0 []
-----------------------------------------------------------------------------------------------------
+
 
 makeQueue :: Algorithm -> Int -> Int-> Int -> [(Int, Int, Int)]
 makeQueue alg error row col 
@@ -210,53 +193,60 @@ makeQueue alg error row col
 
     | otherwise = undefined -- error: greshen algorithm
 
-makeMatrix :: [[Rgb]] -> [(Int,Int,Int)] -> Algorithm -> [[Rgb]]
-makeMatrix matrix [] _ = matrix 
-makeMatrix matrix queue alg = 
-    let
-        currentTuple = head queue
-        row = getFirst currentTuple
-        col = getSecond currentTuple
-        error = getThird currentTuple
-    in
-        if row >= 0 && row < length matrix && col >=0 && col < widthMatrix matrix 
+-- makeMatrix :: [[Rgb]] -> [(Int,Int,Int)] -> Algorithm -> [[Rgb]]
+-- makeMatrix matrix [] _ = matrix 
+-- makeMatrix matrix queue alg = 
+--     let
+--         currentTuple = head queue
+--         row = getFirst currentTuple
+--         col = getSecond currentTuple
+--         error = getThird currentTuple
+--     in
+--         if row >= 0 && row < length matrix && col >= 0 && col < widthMatrix matrix 
+--             then 
+--                 let 
+--                     currentPixel = red (matrix!!row!!col)
+--                     tuple = roundPixel (fromIntegral currentPixel + error)
+--                     newPixelValue = fst tuple
+--                     newErrorValue = snd tuple
+--                     newPixel = Rgb newPixelValue newPixelValue newPixelValue
+--                     newQueue = tail queue ++ makeQueue alg newErrorValue row col
+--                     newMatrix = take row matrix ++ [(take col matrix!!row) ++ [newPixel] ++ (drop (col+1) matrix!!row)] ++ drop (row + 1) matrix
+--                 in makeMatrix newMatrix newQueue alg
+--             else makeMatrix matrix (tail queue) alg
+         
+
+make :: [[Rgb]] -> [[Rgb]]
+make = map (map (\pixel -> let 
+                             newPixelValue = fst (roundPixel (fromIntegral (red pixel)))
+                           in   
+                             Rgb newPixelValue newPixelValue newPixelValue )) 
+
+
+--purwo prawq nowa matrica s subranite pixeli ??? te shte izlizat izwun 255 trqbwa da se oprawiiiii
+sumPixels :: [[Rgb]] -> [(Int,Int,Int)] -> Algorithm -> [[Rgb]]
+sumPixels matrix [] _ = make matrix
+sumPixels matrix queue alg = 
+    let 
+        row = getFirst (head queue)
+        col = getSecond (head queue)
+    in 
+        if row >= 0 && row < length matrix && col >= 0 && col < widthMatrix matrix 
             then 
                 let 
+                    error = getThird (head queue)
                     currentPixel = red (matrix!!row!!col)
-                    tuple = roundPixel (fromIntegral currentPixel + error)
-                    newPixelValue = fst tuple
-                    newErrorValue = snd tuple
-                    newPixel = Rgb newPixelValue newPixelValue newPixelValue
-                    newQueue = tail queue ++ makeQueue alg newErrorValue row col
-                    newMatrix = take row matrix ++ [(take col matrix!!row) ++ [newPixel] ++ (drop (col+1) matrix!!row)] ++ drop (row + 1) matrix
-                in makeMatrix newMatrix newQueue alg
-            else makeMatrix matrix (tail queue) alg
-         
+                    newPixelValue = fromIntegral currentPixel + error
+                    newError = snd (roundPixel (fromIntegral newPixelValue))
+                    newPixel = if newPixelValue < 0 then Rgb 0 0 0 else if newPixelValue > 255 then Rgb 255 255 255 else Rgb (toEnum newPixelValue) (toEnum newPixelValue) (toEnum newPixelValue)
+                    newQueue = tail queue ++ makeQueue alg newError row col
+                    newMatrix = take row matrix ++ [(take col (matrix!!row)) ++ [newPixel] ++ (drop (col+1) (matrix!!row))] ++ drop (row + 1) matrix
+                in sumPixels newMatrix newQueue alg
+            else sumPixels matrix (tail queue) alg
+
+
 makeImg :: Image -> Algorithm -> Image
-makeImg img alg = Image (width img) (height img) (makeMatrix (content img) [(0,0,0)] alg) 
-
-
--- atkinson :: String -> Image
--- atkinson path = Image 0 0 []
--- ----------------------------------------------------------------------------------------------------
--- burkes :: String -> Image
--- burkes path = Image 0 0 []
-
--- sierra :: String -> Image
--- sierra path = Image 0 0 []
-
--- twoRowSierra :: String -> Image
--- twoRowSierra path = Image 0 0 []
-
--- sierraLite :: String -> Image
--- sierraLite path = Image 0 0 []
-
--- ordered4x4 :: String -> Image
--- ordered4x4 path = Image 0 0 []
-
--- ordered8x8 :: String -> Image
--- ordered8x8 path = Image 0 0 []
-
+makeImg img alg = Image (width img) (height img) (sumPixels (content img) [(0,0,0)] alg) 
 
 isValid :: String -> Algorithm -> String -> Bool
 isValid path alg output = True 
@@ -279,6 +269,6 @@ isValid path alg output = True
 -- imageDithering :: String -> Algorithm -> String -> IO ()
 -- imageDithering path algorithm output = 
 --     if isValid path algorithm output 
---         then saveImage output (applyAlgorithm path algorithm)
+--         then saveImage output (makeImg (makeImage path) algorithm)  
 --         else undefined  
 
