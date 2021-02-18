@@ -1,5 +1,5 @@
 # Image Dithering Project
-## for Functional Programming course at FMI. 
+### for Functional Programming course at FMI. 
 
 The main task is to implement all 11 algorithms from this artichle : https://tannerhelland.com/2012/12/28/dithering-eleven-algorithms-source-code.html
 
